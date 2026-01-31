@@ -1,0 +1,4 @@
+/home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/02_thread_management/build/CMakeFiles/02_basic.dir
+/home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/02_thread_management/build/CMakeFiles/02_modern.dir
+/home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/02_thread_management/build/CMakeFiles/edit_cache.dir
+/home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/02_thread_management/build/CMakeFiles/rebuild_cache.dir

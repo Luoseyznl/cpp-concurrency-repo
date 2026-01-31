@@ -3,9 +3,6 @@
 *.epub
 *.zip
 
-# --- 排除 VS Code 的本地配置 ---
-.vscode/
-
 # --- 排除 Zotero 可能产生的元数据文件 ---
 .zotero*
 *.bak

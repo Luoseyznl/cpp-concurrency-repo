@@ -1,130 +1,52 @@
-## C++多线程历史
+## 1. C++多线程历史
 
-```计算机系统
-+-------------------------------------------------------+
-|  L5: C++ Standard Library                             |  C++11 引入
-|      e.g., std::thread, std::mutex                    |  代码通用，跨平台
-+---------------------------+---------------------------+
-                            | Call
-                            v
-+-------------------------------------------------------+
-|  L4: OS API / Library                                 |  C++98 只能写到这一层
-|      e.g., Linux: glibc | Windows: Win32              |  代码不通用，需用 #ifdef 区分
-+---------------------------+---------------------------+
-                            |
-+---------------------------+---------------------------+
-|  L3: Interface Standard                               |  接口规范，规定调用方式
-|      e.g., POSIX (IEEE 1003.1c)                       |  Windows API 由微软自定义
-+---------------------------+---------------------------+
-                            | Call
-                            v
-+-------------------------------------------------------+
-|  L2: C Runtime / CRT                                  |  基础运行时库（处理内存分配、基础环境）
-|      e.g., glibc, MSVCRT                              |  glibc 身兼两职，既是 L2 又是 L4
-+---------------------------+---------------------------+
-                            |
-            ==================================
-             用户态 (User Mode)     |   开销小
-             --------------------- + --------              系统调用边界
-             内核态 (Kernel Mode)   |   开销大
-            ==================================
-                            | 系统调用 (Syscall)
-                            v
-+-------------------------------------------------------+
-|  L1: System Call Interface                            |
-|      Linux: sys_clone  | Windows: NtCreateThread      |
-+---------------------------+---------------------------+
-                            |
-                            v
-+-------------------------------------------------------+
-|  L0: 操作系统内核 (OS Kernel)                           |
-|      管理 CPU 调度、物理内存、硬件中断等                   |
-+-------------------------------------------------------+
-```
+在 C++11 之前，C++ 只是一个“单线程语言”。要实现多线程，必须针对不同操作系统调用底层 API（如 Linux 的 `pthread` 或 Windows 的 `WinAPI`）。
 
-> C++98局限：没有线程概念、内存模型，虽然`Boost.Thread`提供了跨平台线程库，但由于缺乏 L3 内存模型协议，存在潜在的并发安全问题。
-> C++11引入了标准线程库、同步原语和内存模型，彻底解决了跨平台并发编程的问题。**内存模型**：
-> - 最小内存单位 (Memory Location)：标量对象或连续位域为一个单位。访问独立单位无需同步；同一单位有写操作必有竞争（Data Race）。
-> - 修改顺序 (Modification Order)：单个原子变量的所有写操作在全局有一个唯一、所有线程一致的先后顺序。
+![C++ Concurrency Architecture](images/concurrency_arch/concurrency_arch.png)
 
-> **同步** (Synchronization)的三大核心概念：原子操作（最小操作不可分割）、可见性（写了就见效）、有序性（通过内存序约束编译器和CPU优化）。
+| 特性 | C++98 / C++03 | C++11 及以后 |
+| :--- | :--- | :--- |
+| **线程感知** | **无** (语言层面不承认线程存在) | **原生支持** (`std::thread`) |
+| **内存模型** | 无 (依赖编译器/硬件，易出 Bug) | **定义了严格的内存模型** |
+| **跨平台** | 需手写 `#ifdef _WIN32` 或依赖 Boost | 标准库统一封装，代码通用 |
+| **原子操作** | 依赖汇编或 OS API (`InterlockedIncrement`) | `std::atomic` 模板类 |
 
-> C++11：引入 std::thread, std::mutex, std::atomic, std::condition_variable 等基础同步原语。
-> C++14：引入 std::shared_timed_mutex（初步支持读写锁）。
-> C++17：引入 std::shared_mutex（更纯粹、更快速）、并行算法库、std::scoped_lock。
+### 1.1 内存模型 (Memory Model)
+
+* **最小内存单位 (Memory Location)**：“最小可独立访问单元”，不同单位的访问通常不会形成数据竞争（无需同步）；
+* **数据竞争 (Data Race)**：多个线程对同一块内存单位（至少有一个）**写**，未加同步措施 $\rightarrow$ **未定义行为 (Undefined Behavior)**。
+* **修改顺序 (Modification Order)**：对**单个**原子变量存在全局一致的修改顺序。
+
+### 1.2 同步 (Synchronization) 三要素
+
+1.  **原子性 (Atomicity)**：最小操作不可分割，中间状态不可见。
+2.  **可见性 (Visibility)**：在满足同步关系时，其他线程能够观察到某个线程的对共享变量的修改。（通过**同步原语**约束）
+3.  **有序性 (Ordering)**：允许编译器**重排序**，但不能违反内存模型规定的 happens-before（先行发生）关系。（通过**内存序**约束）
 
 ---
 
-## 1. 线程管理
+## 2. 线程管理
 
-### 1.1 代码
+### 2.1 代码
 
-```cpp
-#include <thread>
+### 2.1 Show Me Your Code.
 
-void task(int &id, std::string data, std::unique_ptr<int> ptr) {
-    // 线程任务，需要一个引用、一个字符串、一个不可拷贝类型
-}
+* ![包装器 (scoped_thread)](cpp-concurrency-practice/utils/scoped_thread.hpp)：用 RAII 类自动管理线程生命周期，避免忘记 join/detach 导致资源泄漏或异常时访问悬空引用。
+* ![工厂模式与批量管理](cpp-concurrency-practice/02_thread_management/01_basic_management.cpp)：
+  - 工厂模式 (spawn_worker)：将线程创建逻辑封装在函数中，返回`std::thread`对象，**由调用者决定回收策略**。
+  - 批量管理：通过移动语义使用一个线程容器`std::vector<std::thread>`批量管理线程，简化代码。
+- ![C++20 现代方案](cpp-concurrency-practice/02_thread_management/02_modern_jthread.cpp)：`std::jthread`，自动汇合，支持协作式中断。
 
-// RAII 线程包装器（自动生命周期管理，避免访问到悬空引用）
-class scoped_thread {
-    std::thread t;
-public:
-    // *1.* 构造函数：夺取线程所有权
-    explicit scoped_thread(std::thread t_) : t(std::move(t_)) {
-        if(!t.joinable()) throw std::logic_error("No thread");
-    }
-    // *2.* 自动 join 回收资源
-    ~scoped_thread() { t.join(); }
+### 2.2 线程管理与避坑指南
 
-    scoped_thread(const scoped_thread&) = delete;
-    scoped_thread& operator=(const scoped_thread&) = delete;
-};
+> `std::thread`是用户态的句柄，底层通常对应一个由操作系统内核管理的线程实体。但本质都不是 CPU 核心：线程是操作系统调度的最小单位。
 
-// 工厂模式(Spawn)：创建并返回线程，由调用者决定回收策略
-std::thread spawn_worker(int& counter) {
-    std::unique_ptr<int> p = std::make_unique<int>(42);
-    std::string text = "SpawnedData";
-
-    return std::thread(
-        task,                   // 传函数指针和参数
-        std::ref(counter),
-        text,
-        std::move(p)
-    );
-}
-
-int main() {
-    int shared_id = 0;
-
-    // 场景 A：工厂模式 + RAII 包装器（工厂产生线程 -> 立即交给包装器管理 -> main 结束时自动 join）
-    scoped_thread s_t{ spawn_worker(shared_id) };
-
-    // 场景 B：批量管理（线程容器 + 移动语义）
-    std::vector<std::thread> workers;
-    for(int i = 0; i < 4; ++i) {
-        workers.emplace_back(spawn_worker(shared_id));
-    }
-
-    for(auto& t : workers) {
-        if(t.joinable()) t.join();
-    }
-
-    return 0;
-}
-```
-
-### 1.2 线程管理与避坑指南
-
-> std::thread 对象代表用户态句柄，底层线程代表内核态执行实体。线程对象析构时不会自动回收底层线程资源，必须显式调用`join()`或`detach()`。
-> **注意**：
-> 1. 避免 **vexing parse** 问题：使用统一初始化`std::thread t1{task()};`或Lambda表达式`std::thread t2([]{ ... });`启动线程。
-> 2. 使用**RAII类管理**线程生命周期：抛出异常时要确保线程资源被正确回收（使用try-catch或RAII类）。为避免线程访问到悬空引用（已销毁的局部变量）。
-> 3. 传参时默认**按值拷贝**，字符串字面量必须显式转换为`std::string`，引用必须使用`std::ref`或`std::cref`，不可拷贝类型必须使用`std::move`传递。
-> 4. 线程对象不可拷贝，但可以移动(move)。一般使用线程容器（如`std::vector<std::thread>`）批量管理线程（工厂模式、RAII包装器）。
-
-> 现代方案：std::jthread (C++20)；支持自动 join；协作式中断 `std::stop_token`；赋值运算符支持自动移动。
-> 并发规模与性能优化：使用`std::thread::hardware_concurrency()`确定硬件支持的并发线程数，结合任务粒度和系统负载动态调整实际启动的线程数。
+> **⚠ 注意**：
+> **避免 Vexing Parse**：使用统一初始化`std::thread t1{task()};`或Lambda表达式`std::thread t2([]{ ... });`
+> **最佳实践**：使用 RAII 类管理线程生命周期，抛出异常时要确保线程资源被正确回收（使用try-catch或RAII类）。
+> **参数传递**：传参时默认按值拷贝，字符串字面量必须显式转换为`std::string`，引用必须使用`std::ref`或`std::cref`，不可拷贝类型必须使用`std::move`传递。
+> std::thread本身只能移动(move)，**不可拷贝**。（比如压入`std::vector`或从工厂函数返回（返回会触发移动构造））
+> 实际线程数应结合任务粒度（IO密集型 vs CPU密集型）动态调整，可使用`std::thread::hardware_concurrency()`确定硬件支持的并发线程数。
 
 ---
 
