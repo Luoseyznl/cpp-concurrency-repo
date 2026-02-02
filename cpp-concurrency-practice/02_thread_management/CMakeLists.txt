@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
-project(CppConcurrencyNotes)
+project(02ThreadManagement)
 
 set(CMAKE_CXX_STANDARD 20) # 支持 jthread
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD_REQUIRED ON) # 强制使用指定的 C++ 标准
 
 include_directories(../utils)
 

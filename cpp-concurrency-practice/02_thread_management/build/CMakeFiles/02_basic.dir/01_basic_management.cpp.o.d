@@ -201,7 +201,7 @@ CMakeFiles/02_basic.dir/01_basic_management.cpp.o: \
  /usr/include/c++/13/bits/stl_vector.h \
  /usr/include/c++/13/bits/stl_bvector.h \
  /usr/include/c++/13/bits/vector.tcc \
- /home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/02_thread_management/../utils/scoped_thread.hpp \
+ /home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/02_thread_management/./utils/scoped_thread.hpp \
  /usr/include/c++/13/thread /usr/include/c++/13/stop_token \
  /usr/include/c++/13/atomic /usr/include/c++/13/bits/std_thread.h \
  /usr/include/c++/13/semaphore /usr/include/c++/13/bits/semaphore_base.h \

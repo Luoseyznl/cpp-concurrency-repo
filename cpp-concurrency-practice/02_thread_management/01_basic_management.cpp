@@ -3,19 +3,19 @@
 #include <string>
 #include <vector>
 
-#include "../utils/scoped_thread.hpp"
+#include "./utils/scoped_thread.hpp"
 
 void task(int& id, std::string data, std::unique_ptr<int> ptr) {
   //   std::cout << "[Thread " << std::this_thread::get_id() << "] "
   //             << "Processing ID:" << id << ", Data:" << data
   //             << ", PtrVal:" << *ptr << std::endl;
-  for (int i = 0; i < 100; ++i) {
+  for (int i = 0; i < 10000; ++i) {
     ++id;
   }
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1));
 }
 
-// 工厂模式：封装构造逻辑细节 + 返回对象触发移动语义（由调用者负责析构）
+// 工厂模式：封装构造逻辑细节 + 返回对象触发 NRVO（由调用者负责析构）
 std::thread spawn_worker(int& counter) {
   return std::thread(task, std::ref(counter), "SpawnedData",
                      std::make_unique<int>(42)  // 移动语义
@@ -44,7 +44,7 @@ int main() {
     std::cerr << "Exception: " << e.what() << std::endl;
   }
 
-  std::cout << "Final ID value: " << shared_id << " (Expected 10200)"
+  std::cout << "Final ID value: " << shared_id << " (Expected: 1010000)"
             << std::endl;
   return 0;
 }

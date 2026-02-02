@@ -3,7 +3,7 @@
 
 CMakeFiles/02_basic.dir/01_basic_management.cpp.o
  /home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/02_thread_management/01_basic_management.cpp
- /home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/utils/scoped_thread.hpp
+ /home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/02_thread_management/utils/scoped_thread.hpp
  /usr/include/alloca.h
  /usr/include/asm-generic/errno-base.h
  /usr/include/asm-generic/errno.h

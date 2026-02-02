@@ -13,207 +13,78 @@
 
 ### 1.1 内存模型 (Memory Model)
 
-* **最小内存单位 (Memory Location)**：“最小可独立访问单元”，不同单位的访问通常不会形成数据竞争（无需同步）；
-* **数据竞争 (Data Race)**：多个线程对同一块内存单位（至少有一个）**写**，未加同步措施 $\rightarrow$ **未定义行为 (Undefined Behavior)**。
+* **最小内存单位 (Memory Location)**：最小可独立访问单元，不同单位的访问不会形成数据竞争（无需同步）；
+* **数据竞争 (Data Race)**：多个线程对同一块内存单位（至少有一个）**写**，未加同步措施 $\rightarrow$ **未定义行为**。
 * **修改顺序 (Modification Order)**：对**单个**原子变量存在全局一致的修改顺序。
 
 ### 1.2 同步 (Synchronization) 三要素
 
 1.  **原子性 (Atomicity)**：最小操作不可分割，中间状态不可见。
-2.  **可见性 (Visibility)**：在满足同步关系时，其他线程能够观察到某个线程的对共享变量的修改。（通过**同步原语**约束）
-3.  **有序性 (Ordering)**：允许编译器**重排序**，但不能违反内存模型规定的 happens-before（先行发生）关系。（通过**内存序**约束）
+2.  **可见性 (Visibility)**：通过**同步原语**约束，其他线程能够观察到某个线程的对共享变量的修改。
+3.  **有序性 (Ordering)**：允许编译器和处理器重排序，但不能违反 happens-before 所建立的因果顺序。
+
+![C++ Synchronization Architecture](images/synchronize_arch/synchronize_arch.png)
 
 ---
 
 ## 2. 线程管理
 
-### 2.1 代码
-
 ### 2.1 Show Me Your Code.
 
-* ![包装器 (scoped_thread)](cpp-concurrency-practice/utils/scoped_thread.hpp)：用 RAII 类自动管理线程生命周期，避免忘记 join/detach 导致资源泄漏或异常时访问悬空引用。
-* ![工厂模式与批量管理](cpp-concurrency-practice/02_thread_management/01_basic_management.cpp)：
-  - 工厂模式 (spawn_worker)：将线程创建逻辑封装在函数中，返回`std::thread`对象，**由调用者决定回收策略**。
+- ![包装器 (scoped_thread)](cpp-concurrency-practice/utils/scoped_thread.hpp)：用 RAII 类自动管理线程，避免忘记 join/detach 导致资源泄漏或访问悬空引用。
+- ![工厂模式与批量管理](cpp-concurrency-practice/02_thread_management/01_basic_management.cpp)：
+  - 工厂模式 (spawn_worker)：将线程创建逻辑封装，返回`std::thread`对象，**由调用者决定回收策略**。
   - 批量管理：通过移动语义使用一个线程容器`std::vector<std::thread>`批量管理线程，简化代码。
 - ![C++20 现代方案](cpp-concurrency-practice/02_thread_management/02_modern_jthread.cpp)：`std::jthread`，自动汇合，支持协作式中断。
 
 ### 2.2 线程管理与避坑指南
 
-> `std::thread`是用户态的句柄，底层通常对应一个由操作系统内核管理的线程实体。但本质都不是 CPU 核心：线程是操作系统调度的最小单位。
+> `std::thread`是用户态的句柄，底层通常对应一个由操作系统内核管理的线程实体。但本质都不是 CPU 核心：线程是操作系统调度的最小单位，CPU 核心是实际执行指令的硬件资源。
 
 > **⚠ 注意**：
-> **避免 Vexing Parse**：使用统一初始化`std::thread t1{task()};`或Lambda表达式`std::thread t2([]{ ... });`
-> **最佳实践**：使用 RAII 类管理线程生命周期，抛出异常时要确保线程资源被正确回收（使用try-catch或RAII类）。
-> **参数传递**：传参时默认按值拷贝，字符串字面量必须显式转换为`std::string`，引用必须使用`std::ref`或`std::cref`，不可拷贝类型必须使用`std::move`传递。
-> std::thread本身只能移动(move)，**不可拷贝**。（比如压入`std::vector`或从工厂函数返回（返回会触发移动构造））
-> 实际线程数应结合任务粒度（IO密集型 vs CPU密集型）动态调整，可使用`std::thread::hardware_concurrency()`确定硬件支持的并发线程数。
+> - **避免 Vexing Parse**：使用统一初始化`std::thread t1{task()};`或Lambda表达式`std::thread t2([]{ ... });`
+> - **最佳实践**：使用 RAII 类管理线程生命周期，抛出异常时要确保线程资源被正确回收（使用try-catch或RAII类）。
+> - **参数传递**：传参时默认按值拷贝，字符串字面量必须显式转换为`std::string`，引用`std::ref`或`std::cref`，不可拷贝类型必须使用`std::move`传递。
+> - std::thread本身只能移动(move)，**不可拷贝**。（比如压入`std::vector`或从工厂函数返回（NRVO））
+> - 线程数应结合任务粒度（IO密集型 vs CPU密集型）动态调整，可使用`std::thread::hardware_concurrency()`确定硬件支持的并发线程数。
 
 ---
 
-## 2. 共享数据保护
+## 2. 共享数据保护（Mutex & Lock）
 
-### 2.1 代码
+### 2.1 Show Me Your Code.
 
-```cpp
-// ==========================================================
-// 1. 解决接口竞争 (Interface Race) - 两种经典模式
-// ==========================================================
-template<typename T>
-class ThreadSafeStack {
-    std::stack<T> data;
-    mutable std::mutex m; // mutable: 允许在 empty() 等 const 函数中上锁
+![线程安全栈 (thread_safe_stack)](cpp-concurrency-practice/03_sharing_data/01_thread_safe_stack.cpp)
+![交叉转账（死锁防御案例）](cpp-concurrency-practice/03_sharing_data/02_deadlock_avoidance.cpp)
+![灵活用锁（unique_lock）](cpp-concurrency-practice/03_sharing_data/03_lock_flexibility.cpp)
+![单例模式（call_once）](cpp-concurrency-practice/03_sharing_data/04_call_once_singleton.cpp)
+![读写分离锁（shared_mutex）](cpp-concurrency-practice/03_sharing_data/05_shared_mutex_dns.cpp)
 
-public:
-    // 方案 A: 传入引用
-    void pop(T& value) {
-        std::lock_guard<std::mutex> lock(m);
-        if (data.empty()) throw std::runtime_error("Empty stack");
-        value = data.top();     // 先拷贝再删除，并且这里直接复用外部对象内存空间，避免额外分配
-        data.pop();
-    }
+### 2.2 互斥锁原理与避坑指南
 
-    // 方案 B: 返回智能指针
-    std::shared_ptr<T> pop() {
-        std::lock_guard<std::mutex> lock(m);
-        if (data.empty()) throw std::runtime_error("Empty stack");
-        auto res = std::make_shared<T>(data.top());     // 先拷贝再删除，防止拷贝构造异常丢失
-        data.pop();
-        return res;
-    }
-};
+> 并发问题的本质：一个线程在尚未恢复共享状态**不变量**时，被另一个线程观察或干扰。竞态条件有：数据竞争、高层竞态。
+> 1. **数据竞争**：多线程访问同一内存单元，至少一个是写操作，且未加同步措施 $\rightarrow$ 未定义行为。
+> 2. **高层竞态**：即使不存在数据竞争，线程执行顺序仍可能导致程序违反逻辑约束或语义期望的情况。
+>   - 接口竞争（check-then-act）：比如经典的序列错误`if (!s.empty()) { int v = s.top(); s.pop(); }`。
+>   - 丢失更新（lost update）：读取-修改-写入序列的中间状态被其他线程观察到，导致逻辑冲突。
+> **解决方案**：
+> 1. **阻塞同步**（悲观锁定）：通过互斥锁(`std::mutex`)强行**串行化**，确保同一时间只有一个线程访问**临界区**。
+> 2. **无锁编程**（底层原语）：利用 CPU 提供的原子指令(CAS, `std::atomic`)争抢资源，失败则**自旋**重试。
+> 3. **软件事务内存**（乐观并发）：将一组操作封装为事务，提交时检测版本冲突，若冲突则**回滚并自动重试**。
+> 4. **异步消息传递**（无共享）：**通过通信共享内存**（Actor/CSP模型），线程间持有私有状态，通过消息队列交互。
 
-// ==========================================================
-// 2. 死锁防御 & 原子化申请 (Deadlock Avoidance)
-// ==========================================================
-struct Account {
-    std::mutex m;
-    int balance;
-};
+> **⚠ 注意**：
+> 1. **避免数据外泄**：保护共享数据时，避免返回受保护数据的**引用或指针**、将受保护数据传参给**外部回调函数**。
+> 2. **死锁 (Deadlock) 防御体系**：避免互持锁等待。
+>   - 首选方案 (C++17)：使用`std::scoped_lock`。能一次性以原子方式锁定多个 Mutex，内部算法保证上锁顺序一致。
+>   - 备选方案 (C++11)：使用`std::lock(m1, m2, ...)`配合`std::lock_guard`的`std::adopt_lock`参数。
+> 3. **减小临界区与锁竞争**：细粒度锁、读写锁分离、步进式加锁（Hand-over-hand Locking 遍历链表或树形结构）。
+> 4. **try-lock 策略**：try-lock 无法获得锁时，立即释放已持有的所有锁并回滚状态，延迟后重新尝试（自我剥夺）。
+> 5. **锁层级设计**：为每个互斥量分配层级编号，规定线程只能按照编号递减（或递增）的顺序加锁，消除环路等待。
 
-// 场景：转账 (涉及两个锁)
-void transfer(Account& from, Account& to, int amount) {
-    if (&from == &to) return; // 1. 自锁检查
+> **∴ 总结**：优先采用**串行化或粗粒度锁**以保证系统正确、可维护；在体系结构层面引入细粒度锁、无锁队列或层级锁协议。
 
-    // [C++17 推荐] scoped_lock: 原子化获取多个锁，内部含死锁避免算法
-    std::scoped_lock lock(from.m, to.m); 
-    
-    // [C++11 备选] std::lock + adopt_lock
-    // std::lock(from.m, to.m); // 手动同时上锁
-    // std::lock_guard<std::mutex> lk1(from.m, std::adopt_lock); // 领养锁
-    // std::lock_guard<std::mutex> lk2(to.m, std::adopt_lock);
-
-    from.balance -= amount;
-    to.balance += amount;
-}
-
-// ==========================================================
-// 3. unique_lock 的灵活性 & 锁所有权转移
-// ==========================================================
-std::mutex g_io_mutex;
-
-// 工厂模式：函数返回锁的所有权 (Move Semantics)
-std::unique_lock<std::mutex> get_locked_io() {
-    std::unique_lock<std::mutex> lk(g_io_mutex); // 上锁
-    // ... 预处理 ...
-    return lk; // 移动构造，所有权转出
-}
-
-void flexible_task() {
-    // 1. 延迟上锁 (defer_lock)
-    std::unique_lock<std::mutex> lk(g_io_mutex, std::defer_lock);
-    
-    // ... 做一些不需要锁的准备工作 ...
-    
-    // 2. 灵活重试 (try_lock) - 也就是"自我剥夺"逻辑的体现
-    if (lk.try_lock()) {
-        // 拿到锁了，处理数据
-        lk.unlock(); // 3. 提前解锁 (减少锁粒度)
-    } else {
-        // 没拿到锁，回滚或重试
-    }
-
-    // 4. 接收所有权
-    std::unique_lock<std::mutex> lk2 = get_locked_io(); 
-    if (lk2.owns_lock()) { /*...*/ }
-}
-
-// ==========================================================
-// 4. 安全初始化 (Singleton / Lazy Init)
-// ==========================================================
-class Singleton {
-public:
-    // 方案 A [推荐]: 静态局部变量 (Magic Static, C++11起线程安全)
-    static Singleton& get_instance() {
-        static Singleton instance;
-        return instance;
-    }
-
-    // 方案 B: std::call_once (适用于成员变量延迟初始化)
-    void lazy_init_member() {
-        std::call_once(init_flag_, [&](){
-            resource_ = std::make_unique<int>(42);
-        });
-    }
-
-private:
-    std::once_flag init_flag_;
-    std::unique_ptr<int> resource_;
-};
-
-// ==========================================================
-// 5. 读写锁 (Read-Write Lock) - 读多写少性能优化
-// ==========================================================
-class DnsCache {
-    std::map<std::string, std::string> entries;
-    mutable std::shared_mutex sm; // shared_mutex (C++17)
-
-public:
-    // 读者：shared_lock (允许并发读)
-    std::string resolve(const std::string& domain) const {
-        std::shared_lock<std::shared_mutex> lk(sm); 
-        auto it = entries.find(domain);
-        return (it != entries.end()) ? it->second : "";
-    }
-
-    // 写者：lock_guard/unique_lock (独占写)
-    void update(const std::string& domain, const std::string& ip) {
-        std::lock_guard<std::shared_mutex> lk(sm); 
-        entries[domain] = ip;
-    }
-};
-```
-
-### 2.2 并发问题与避坑指南
-
-> 并发问题的根源在与双线程交替执行时，暂时破坏了数据结构的不变量(invariant)。此时另一个线程介入会导致程序崩溃（条件竞争：数据竞争、逻辑竞争）。
-> 1. **针对数据竞争**：使用原子操作(atomic operations)或互斥锁(mutex)将数据结构改为**线程安全**的。
-> 2. **针对逻辑竞争**：本质是非原子化操作导致的逻辑失效，可以使用更高层次的同步原语(如条件变量condition variable)保护，或重构代码设计更合理的接口。
->  - 比如**接口竞争**：**check-then-act**（`if(p) do(p);`），可以将多个成员函数合并为一个原子操作。
->  - 比如**丢失更新**：读取-修改-写入序列的中间状态被其他线程观察到，导致逻辑冲突，应整体加锁或使用原子操作。
->  - 此外还有软件事务内存(STM: Software Transactional Memory)和异步消息传递等更高级的并发控制方法。
-
-> **注意**：即使成员函数是线程安全的，也不能保证整个接口的调用序列是线程安全的。问题的本质在于**锁的粒度**(lock granularity)。
-> 经典错误序列：`if (!s.empty()) { int v = s.top(); s.pop(); }`，应合并为`void pop(T& value);`或`std::shared_ptr<T> pop();`。
-
-> **避坑**：
-> 1. 保护共享数据时，避免“数据外泄”（返回受保护数据的**引用或指针**、将受保护数据传参给**外部回调函数**）。
-> 2. 死锁 (Deadlock) 防御体系：避免互持锁等待。
->  - 首选方案 (C++17)：使用`std::scoped_lock`。能一次性以原子方式锁定多个 Mutex，内部算法保证上锁顺序一致。
->  - 备选方案 (C++11)：使用`std::lock(m1, m2, ...)`配合`std::lock_guard`的`std::adopt_lock`参数。
-
-> **死锁避坑进阶 & 防御性设计**：
-> 1. **原子化申请**：优先使用`std::lock`或`std::scoped_lock`一次性获取多个锁。                            （灵活重试）
-> 2. **划定“外部代码”禁区**：禁止在持有锁时调用插件、回调或用户自定义函数。                                   （消除不确定性）
-> 3. **手递手”缩小链表锁粒度**：在遍历长链表或大型树形结构时，采用“步进式”加锁：锁住A -> 锁住B -> 解锁A。        （压缩多个锁持有时间，固定顺序）
-> 4. **灵活重试**：如果无法通过`try_lock`获得序列中的所有锁，必须立即释放已持有的所有锁并回滚状态，稍后重新尝试。  （自我剥夺）
-> 5. **层次锁**（防御式设计）：为每个互斥量分配层级编号，规定线程只能按照编号递减（或递增）的顺序加锁。             （消除环路等待）
-> 总结：优先利用标准库的原子化申请来解决**战术**死锁；通过层级锁规约和手递手加锁从**架构层面**优化性能并规避**战略**死锁。
-
-> **RAII 风格的锁管理**：`std::lock_guard`（C++11），`std::scoped_lock`（C++17），`std::unique_lock`（C++11，功能更强大）。
-> 1. **灵活**：延迟上锁(`std::defer_lock`)、尝试上锁（`std::try_to_lock`）、提前解锁(`unlock()`)、查询锁状态(`owns_lock()`)和移动语义。
-> 2. 初始化资源保护：使用`std::call_once`或函数内静态局部变量初始化。           （只会在一个线程中执行一次，线程安全）
-> 3. 读写锁：使用`std::shared_mutex`允许多个线程同时读取，写入时独占锁。        （极致的并发）
-> 4. 递归锁：`std::recursive_mutex`允许同一线程多次上锁。                    （饮鸩止渴）
+> **RAII 风格的锁管理**：`std::lock_guard`(C++11)，`std::unique_lock`(C++11)，`std::shared_lock`(C++14)，`std::scoped_lock`(C++17)。
 
 ---
 
