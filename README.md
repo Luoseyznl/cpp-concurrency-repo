@@ -31,60 +31,69 @@
 
 ### 2.1 Show Me Your Code.
 
-- ![包装器 (scoped_thread)](cpp-concurrency-practice/utils/scoped_thread.hpp)：用 RAII 类自动管理线程，避免忘记 join/detach 导致资源泄漏或访问悬空引用。
-- ![工厂模式与批量管理](cpp-concurrency-practice/02_thread_management/01_basic_management.cpp)：
+![包装器 (scoped_thread)](cpp-concurrency-practice/utils/scoped_thread.hpp)：用 RAII 类自动管理线程，避免忘记 join/detach 导致资源泄漏或访问悬空引用。
+
+![工厂模式与批量管理](cpp-concurrency-practice/02_thread_management/01_basic_management.cpp)：
   - 工厂模式 (spawn_worker)：将线程创建逻辑封装，返回`std::thread`对象，**由调用者决定回收策略**。
   - 批量管理：通过移动语义使用一个线程容器`std::vector<std::thread>`批量管理线程，简化代码。
-- ![C++20 现代方案](cpp-concurrency-practice/02_thread_management/02_modern_jthread.cpp)：`std::jthread`，自动汇合，支持协作式中断。
+
+![C++20 现代方案](cpp-concurrency-practice/02_thread_management/02_modern_jthread.cpp)：`std::jthread`，自动汇合，支持协作式中断。
 
 ### 2.2 线程管理与避坑指南
 
-> `std::thread`是用户态的句柄，底层通常对应一个由操作系统内核管理的线程实体。但本质都不是 CPU 核心：线程是操作系统调度的最小单位，CPU 核心是实际执行指令的硬件资源。
+`std::thread`是用户态的句柄，底层通常对应一个由操作系统内核管理的线程实体。但本质都不是 CPU 核心：线程是操作系统调度的最小单位，CPU 核心是实际执行指令的硬件资源。
 
-> **⚠ 注意**：
-> - **避免 Vexing Parse**：使用统一初始化`std::thread t1{task()};`或Lambda表达式`std::thread t2([]{ ... });`
-> - **最佳实践**：使用 RAII 类管理线程生命周期，抛出异常时要确保线程资源被正确回收（使用try-catch或RAII类）。
-> - **参数传递**：传参时默认按值拷贝，字符串字面量必须显式转换为`std::string`，引用`std::ref`或`std::cref`，不可拷贝类型必须使用`std::move`传递。
-> - std::thread本身只能移动(move)，**不可拷贝**。（比如压入`std::vector`或从工厂函数返回（NRVO））
-> - 线程数应结合任务粒度（IO密集型 vs CPU密集型）动态调整，可使用`std::thread::hardware_concurrency()`确定硬件支持的并发线程数。
+**⚠ 注意**：
+- **避免 Vexing Parse**：使用统一初始化`std::thread t1{task()};`或Lambda表达式`std::thread t2([]{ ... });`
+- **最佳实践**：使用 RAII 类管理线程生命周期，抛出异常时要确保线程资源被正确回收（使用try-catch或RAII类）。
+- **参数传递**：传参时默认按值拷贝，字符串字面量必须显式转换为`std::string`，引用`std::ref`或`std::cref`，不可拷贝类型必须使用`std::move`传递。
+- std::thread本身只能移动(move)，**不可拷贝**。（比如压入`std::vector`或从工厂函数返回（NRVO））
+- 线程数应结合任务粒度（IO密集型 vs CPU密集型）动态调整，可使用`std::thread::hardware_concurrency()`确定硬件支持的并发线程数。
 
 ---
 
-## 2. 共享数据保护（Mutex & Lock）
+## 3. 共享数据保护（Mutex & Lock）
 
-### 2.1 Show Me Your Code.
+### 3.1 Show Me Your Code.
 
 ![线程安全栈 (thread_safe_stack)](cpp-concurrency-practice/03_sharing_data/01_thread_safe_stack.cpp)
+
 ![交叉转账（死锁防御案例）](cpp-concurrency-practice/03_sharing_data/02_deadlock_avoidance.cpp)
+
 ![灵活用锁（unique_lock）](cpp-concurrency-practice/03_sharing_data/03_lock_flexibility.cpp)
+
 ![单例模式（call_once）](cpp-concurrency-practice/03_sharing_data/04_call_once_singleton.cpp)
+
 ![读写分离锁（shared_mutex）](cpp-concurrency-practice/03_sharing_data/05_shared_mutex_dns.cpp)
 
-### 2.2 互斥锁原理与避坑指南
+### 3.2 互斥锁原理与避坑指南
 
-> 并发问题的本质：一个线程在尚未恢复共享状态**不变量**时，被另一个线程观察或干扰。竞态条件有：数据竞争、高层竞态。
-> 1. **数据竞争**：多线程访问同一内存单元，至少一个是写操作，且未加同步措施 $\rightarrow$ 未定义行为。
-> 2. **高层竞态**：即使不存在数据竞争，线程执行顺序仍可能导致程序违反逻辑约束或语义期望的情况。
->   - 接口竞争（check-then-act）：比如经典的序列错误`if (!s.empty()) { int v = s.top(); s.pop(); }`。
->   - 丢失更新（lost update）：读取-修改-写入序列的中间状态被其他线程观察到，导致逻辑冲突。
-> **解决方案**：
-> 1. **阻塞同步**（悲观锁定）：通过互斥锁(`std::mutex`)强行**串行化**，确保同一时间只有一个线程访问**临界区**。
-> 2. **无锁编程**（底层原语）：利用 CPU 提供的原子指令(CAS, `std::atomic`)争抢资源，失败则**自旋**重试。
-> 3. **软件事务内存**（乐观并发）：将一组操作封装为事务，提交时检测版本冲突，若冲突则**回滚并自动重试**。
-> 4. **异步消息传递**（无共享）：**通过通信共享内存**（Actor/CSP模型），线程间持有私有状态，通过消息队列交互。
+并发问题的本质：一个线程在尚未恢复共享状态**不变量**时，被另一个线程观察或干扰。竞态条件有：数据竞争、高层竞态。
+1. **数据竞争**：多线程访问同一内存单元，至少一个是写操作，且未加同步措施 $\rightarrow$ 未定义行为。
+2. **高层竞态**：即使不存在数据竞争，线程执行顺序仍可能导致程序违反逻辑约束或语义期望的情况。
+   - 接口竞争（check-then-act）：比如经典的序列错误`if (!s.empty()) { int v = s.top(); s.pop(); }`。
+   - 丢失更新（lost update）：读取-修改-写入序列的中间状态被其他线程观察到，导致逻辑冲突。
 
-> **⚠ 注意**：
-> 1. **避免数据外泄**：保护共享数据时，避免返回受保护数据的**引用或指针**、将受保护数据传参给**外部回调函数**。
-> 2. **死锁 (Deadlock) 防御体系**：避免互持锁等待。
->   - 首选方案 (C++17)：使用`std::scoped_lock`。能一次性以原子方式锁定多个 Mutex，内部算法保证上锁顺序一致。
->   - 备选方案 (C++11)：使用`std::lock(m1, m2, ...)`配合`std::lock_guard`的`std::adopt_lock`参数。
-> 3. **减小临界区与锁竞争**：细粒度锁、读写锁分离、步进式加锁（Hand-over-hand Locking 遍历链表或树形结构）。
-> 4. **try-lock 策略**：try-lock 无法获得锁时，立即释放已持有的所有锁并回滚状态，延迟后重新尝试（自我剥夺）。
-> 5. **锁层级设计**：为每个互斥量分配层级编号，规定线程只能按照编号递减（或递增）的顺序加锁，消除环路等待。
+**解决方案**：
+1. **阻塞同步**（悲观锁定）：通过互斥锁(`std::mutex`)强行**串行化**，确保同一时间只有一个线程访问**临界区**。
+2. **无锁编程**（底层原语）：利用 CPU 提供的原子指令(CAS, `std::atomic`)争抢资源，失败则**自旋**重试。
+3. **软件事务内存**（乐观并发）：将一组操作封装为事务，提交时检测版本冲突，若冲突则**回滚并自动重试**。
+4. **异步消息传递**（无共享）：**通过通信共享内存**（Actor/CSP模型），线程间持有私有状态，通过消息队列交互。
 
-> **∴ 总结**：优先采用**串行化或粗粒度锁**以保证系统正确、可维护；在体系结构层面引入细粒度锁、无锁队列或层级锁协议。
+**⚠ 注意**：
+1. **避免数据外泄**：保护共享数据时，避免返回受保护数据的**引用或指针**、将受保护数据传参给**外部回调函数**。
+2. **死锁 (Deadlock) 防御体系**：避免互持锁等待。
+   - 首选方案 (C++17)：使用`std::scoped_lock`。能一次性以原子方式锁定多个 Mutex，内部算法保证上锁顺序一致。
+   - 备选方案 (C++11)：使用`std::lock(m1, m2, ...)`配合`std::lock_guard`的`std::adopt_lock`参数。
+3. **减小临界区与锁竞争**：细粒度锁、读写锁分离、步进式加锁（Hand-over-hand Locking 遍历链表或树形结构）。
+4. **try-lock 策略**：try-lock 无法获得锁时，立即释放已持有的所有锁并回滚状态，延迟后重新尝试（自我剥夺）。
+5. **锁层级设计**：为每个互斥量分配层级编号，规定线程只能按照编号递减（或递增）的顺序加锁，消除环路等待。
 
-> **RAII 风格的锁管理**：`std::lock_guard`(C++11)，`std::unique_lock`(C++11)，`std::shared_lock`(C++14)，`std::scoped_lock`(C++17)。
+**RAII 风格的锁管理**：
+
+`std::lock_guard`(C++11)，`std::unique_lock`(C++11)，`std::shared_lock`(C++14)，`std::scoped_lock`(C++17)。
+
+**∴ 总结**：优先采用**串行化或粗粒度锁**以保证系统正确、可维护；在体系结构层面引入细粒度锁、无锁队列或层级锁协议。
 
 ---
 
