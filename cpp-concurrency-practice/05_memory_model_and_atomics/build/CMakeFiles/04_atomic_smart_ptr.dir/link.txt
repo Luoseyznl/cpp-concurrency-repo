@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/04_atomic_smart_ptr.dir/04_atomic_smart_ptr.cpp.o -o 04_atomic_smart_ptr 

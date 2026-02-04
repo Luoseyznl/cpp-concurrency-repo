@@ -1,0 +1,6 @@
+/home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/05_memory_model_and_atomics/build/CMakeFiles/01_lock_free_stack.dir
+/home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/05_memory_model_and_atomics/build/CMakeFiles/02_release_acquire.dir
+/home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/05_memory_model_and_atomics/build/CMakeFiles/03_atomic_flag_spinlock.dir
+/home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/05_memory_model_and_atomics/build/CMakeFiles/04_atomic_smart_ptr.dir
+/home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/05_memory_model_and_atomics/build/CMakeFiles/edit_cache.dir
+/home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/05_memory_model_and_atomics/build/CMakeFiles/rebuild_cache.dir

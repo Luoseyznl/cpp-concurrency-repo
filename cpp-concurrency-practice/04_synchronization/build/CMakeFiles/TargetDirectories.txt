@@ -1,0 +1,9 @@
+/home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/04_synchronizing_operations/build/CMakeFiles/01_condition_variable.dir
+/home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/04_synchronizing_operations/build/CMakeFiles/02_async_deferred.dir
+/home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/04_synchronizing_operations/build/CMakeFiles/03_packaged_task.dir
+/home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/04_synchronizing_operations/build/CMakeFiles/04_promise_future.dir
+/home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/04_synchronizing_operations/build/CMakeFiles/05_shared_future.dir
+/home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/04_synchronizing_operations/build/CMakeFiles/06_chrono_utils.dir
+/home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/04_synchronizing_operations/build/CMakeFiles/07_boost_chaining.dir
+/home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/04_synchronizing_operations/build/CMakeFiles/edit_cache.dir
+/home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/04_synchronizing_operations/build/CMakeFiles/rebuild_cache.dir
