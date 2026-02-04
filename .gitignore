@@ -1,9 +1,16 @@
-# --- 排除大型二进制文件 ---
-*.pdf
-*.epub
-*.zip
+# LaTeX 编译产生的文件
+*.aux
+*.log
+*.synctex.gz
+*.fls
+*.fdb_latexmk
 
-# --- 排除 Zotero 可能产生的元数据文件 ---
-.zotero*
-*.bak
-*.tmp
+# 忽略所有 PDF
+*.pdf
+
+# images 里只保留 tex 和 png 文件，忽略其他文件
+images/*
+
+!images/*/
+!images/**/*.png
+!images/**/*.tex

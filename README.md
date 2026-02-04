@@ -29,7 +29,7 @@
 
 ## 2. 线程管理
 
-### 2.1 Show Me Your Code.
+### 2.1 Show Me Your Codes.
 
 ![包装器 (scoped_thread)](cpp-concurrency-practice/02_thread_management/utils/scoped_thread.hpp)：用 RAII 类自动管理线程，避免忘记 join/detach 导致资源泄漏或访问悬空引用。
 
@@ -54,7 +54,7 @@
 
 ## 3. 共享数据保护（Mutex & Lock）
 
-### 3.1 Show Me Your Code.
+### 3.1 Show Me Your Codes.
 
 ![线程安全栈 (thread_safe_stack)](cpp-concurrency-practice/03_sharing_data/01_thread_safe_stack.cpp)
 
@@ -68,7 +68,7 @@
 
 ### 3.2 互斥锁原理与避坑指南
 
-并发问题的本质：一个线程在尚未恢复共享状态**不变量**时，被另一个线程观察或干扰。竞态条件有：数据竞争、高层竞态。
+并发问题的本质：在一个线程尚未恢复共享**不变量**时，被另一个线程观察或干扰。竞态条件有：数据竞争、高层竞态。
 1. **数据竞争**：多线程访问同一内存单元，至少一个是写操作，且未加同步措施 $\rightarrow$ 未定义行为。
 2. **高层竞态**：即使不存在数据竞争，线程执行顺序仍可能导致程序违反逻辑约束或语义期望的情况。
    - 接口竞争（check-then-act）：比如经典的序列错误`if (!s.empty()) { int v = s.top(); s.pop(); }`。
@@ -99,7 +99,7 @@
 
 ## 4. 同步操作
 
-### 4.1 Show Me Your Code.
+### 4.1 Show Me Your Codes.
 
 ![条件变量 (condition_variable)](cpp-concurrency-practice/04_synchronization/01_condition_variable.cpp)
 
@@ -170,7 +170,7 @@ C++11引入`<chrono>`头文件，提供类型安全的**时间处理机制**，�
 
 ## 5. 原子操作和内存模型
 
-### 5.1 Show Me Your Code.
+### 5.1 Show Me Your Codes.
 
 ![无锁栈 (lock_free_stack)](cpp-concurrency-practice/05_memory_model_and_atomics/01_lock_free_stack.cpp)
 
@@ -209,7 +209,7 @@ C++11引入`<chrono>`头文件，提供类型安全的**时间处理机制**，�
 
 ## 6. 基于锁的并发数据结构设计
 
-### 6.1 Show Me Your Code.
+### 6.1 Show Me Your Codes.
 
 ![线程安全栈（接口安全）](cpp-concurrency-practice/06_lock_based_concurrent_data_structures/01_thread_safe_stack.cpp)
 
@@ -236,20 +236,27 @@ if (!stack.empty()) { // 检查栈是否为空
 
 ---
 
-## 6. 无锁数据结构设计
+## 7. 无锁并发数据结构设计
 
-> 无锁结构可以提高鲁棒性（避免死锁、线程崩溃导致的资源不可用），目标是**在竞争下仍然保证系统整体向前推进（至少一个线程能完成）**。
-> **基本套路**：通过原子操作（CAS）实现**乐观并发控制**，线程不断尝试更新共享数据，失败则重新读取并重试，直到成功为止。
-> **无锁内存回收**的三种思路：
-> 1. 延迟回收（垃圾链表）：维护一个待删除节点链表，只有当活跃线程计数器（原子变量）为0时才删除节点。
-> 2. 风险指针（Hazard Pointers）：每个线程维护一个全局可见的指针，在访问节点之前“举手示意”，删除线程看到“无人举手”时才能删除节点。
-> 3. 分离引用计数（Split Reference Counting）：普通引用计数在无锁下有“空窗期”，通过分离“外部引用计数”和“内部引用计数”解决。
+### 7.1 Show Me Your Codes.
 
-### 6.3 前人经验
-> 1. 优先复用成熟无锁库而非自行实现，如：`Intel TBB`、`Facebook Folly`、`Concurrency Kit`等。
-> 2. 内存序默认使用`std::memory_order_seq_cst`，仅在确认瓶颈后再做针对性放宽。
-> 3. 无锁数据结构必须显式设计内存回收策略，否则正确性无法成立。   （C++缺少GC）
-> 4. 任何基于 CAS 的算法都需显式防范 ABA 问题。   （标记位、版本号、指针包裹等）
-> 5. 在无锁设计中应允许并实现线程间的“帮助”以保证系统级前进性。
+
+### 7.2 设计原则与避坑指南
+
+![核心定义](images/concurrency_program_arch/concurrency_program_arch.png)
+
+**⚠ 注意**：
+1. **无锁不等于高性能**：无锁结构通常伴随更高的复杂度和开销，，仅在锁竞争成为瓶颈的高并发场景下才具备性能优势。
+2. **正确性优先于性能**：无锁设计必须首先确保**线程安全性**和**系统前进性**，再考虑内存序等性能优化。
+3. **ABA问题防范**：何基于 CAS 的算法都必须显式解决 ABA 问题（值变回原样但状态已变）。
+   1. 使用**标记位**或**版本号**：将指针与版本号打包在一起，CAS 时同时比较指针和版本号。
+   2. 使用**双倍宽度 CAS**：利用 CPU 支持的双倍宽度原子操作，同时更新指针和版本号。
+4. **内存回收策略**：无锁环境缺乏自动 GC，必须显式设计**安全内存回收（SMR）**策略。
+   1. 延迟回收（Epoch-Based）：维护一个**待删除节点链表**，只有当活跃线程都离开 epoch 后，全局计数器为零时才回收。
+   2. 风险指针：读线程对目标节点“举手示意”（**全局可见指针**），写线程在删除前扫描，“无人举手”才可回收节点。
+   3. 分离引用计数：将普通计数分离为 **外部链接数** 和 **内部引用数** ，二者皆零时方可释放。
+5. **优先复用成熟无锁库**：`Intel TBB`、`Facebook Folly`、`Concurrency Kit`等。
+6. **内存序默认最强**：`std::memory_order_seq_cst`，仅在确认是性能热点且逻辑无误后再针对性放宽。
+7. **实现协助机制 (Helping)**：若遇冲突应实现线程间的“协助”，而非阻塞等待，以保证系统整体吞吐。
 
 
