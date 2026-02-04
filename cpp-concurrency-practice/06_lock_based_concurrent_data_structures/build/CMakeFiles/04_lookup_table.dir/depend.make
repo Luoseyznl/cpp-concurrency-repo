@@ -1,0 +1,2 @@
+# Empty dependencies file for 04_lookup_table.
+# This may be replaced when dependencies are built.

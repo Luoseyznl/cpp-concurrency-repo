@@ -1,0 +1,6 @@
+/home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/06_lock_based_concurrent_data_structures/build/CMakeFiles/01_thread_safe_stack.dir
+/home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/06_lock_based_concurrent_data_structures/build/CMakeFiles/02_thread_safe_queue.dir
+/home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/06_lock_based_concurrent_data_structures/build/CMakeFiles/03_fine_grained_queue.dir
+/home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/06_lock_based_concurrent_data_structures/build/CMakeFiles/04_lookup_table.dir
+/home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/06_lock_based_concurrent_data_structures/build/CMakeFiles/edit_cache.dir
+/home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/06_lock_based_concurrent_data_structures/build/CMakeFiles/rebuild_cache.dir

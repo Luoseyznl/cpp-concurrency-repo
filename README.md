@@ -14,8 +14,8 @@
 ### 1.1 内存模型 (Memory Model)
 
 * **最小内存单位 (Memory Location)**：最小可独立访问单元，不同单位的访问不会形成数据竞争（无需同步）；
-* **数据竞争 (Data Race)**：多个线程对同一块内存单位（至少有一个）**写**，未加同步措施 $\rightarrow$ **未定义行为**。
-* **修改顺序 (Modification Order)**：对**单个**原子变量存在全局一致的修改顺序。
+* **数据竞争 (Data Race)**：多个线程对同一块内存单位（至少有一个）写，未加同步措施 $\rightarrow$ **未定义行为**。
+* **修改顺序 (Modification Order)**：对**单个原子变量**存在全局一致的修改顺序。
 
 ### 1.2 同步 (Synchronization) 三要素
 
@@ -124,7 +124,7 @@
 - 就绪（Ready）：TCB 存于就绪队列中，等待调度器分配 CPU 时间片。
 - 阻塞（Blocked）：TCB 移出就绪队列，挂入对应的等待队列中，等待外部事件（锁、I/O、信号）。
 - 挂起（Suspended）：TCB 仍然在内存中，但进程的虚拟内存被换出到磁盘，等待恢复。
-- 终止（Terminated）：线程执行完毕，资源（栈、寄存器）立即释放，仅留 TCB 等待父进程/主线程（Zombie/Terminate）回收。
+- 终止（Terminated）：资源（栈、寄存器）立即释放，仅留 TCB 等待父进程/主线程（Zombie/Terminate）回收。
 
 ### 4.3 同步操作原理与避坑指南
 
@@ -133,19 +133,19 @@
 **⚠ 注意**：
 1. 基于状态的同步（**条件变量 CV**）：
    - 虚假唤醒：`wait()`可能在没有 notify 的情况下被唤醒，必须在循环中检查谓词。
-   - 唤醒丢失：`notify_one()`在没有等待线程时调用会丢失唤醒信号，CV 没有记忆功能（不像信号量 Semaphore）。
+   - 唤醒丢失：`notify_one()`在没有等待线程时调用会丢失唤醒信号，CV 没有记忆功能（不像信号量）。
    - 惊群效应：`notify_all()`会唤醒所有等待线程，可能导致大量线程竞争 CPU，影响性能。
    - 解锁时机：建议先释放锁再调用`notify_one()`/`notify_all()`，避免唤醒线程立即阻塞等待锁。
 
 2. 基于事件的同步（**异步任务 Future/Promise**）：
-   - 死亡之吻（Future 的析构阻塞）：如果`std::future`变成临时对象（返回未赋值），会在析构时阻塞等待任务完成。
+   - 死亡之吻（Future 的析构阻塞）：如果`std::future`变成临时对象，会在析构时阻塞等待。
    - 异常传播：`std::future`可用于跨进程传播异常，`p.set_exception()`设置异常，`f.get()`重新抛出。
    - 并发版`std::function`：`std::packaged_task`将可调用对象包装为异步任务，可与`std::future`关联。
    - `std::atomic_wait`：C++20 允许对原子变量进行等/醒操作，在某些场景下可以替代 CV。
 
 3. C++20多线程阶段性协作同步原语：
    - `std::latch`锁存器：一次性计数器。例如主线程等待多个线程初始化完成后再继续。
-   - `std::barrier`栅栏：可重置的同步点。例如并行计算中的“第 N 轮迭代结束后，所有人对齐再进入第 N+1 轮”。
+   - `std::barrier`栅栏：可重置的同步点。例如并行计算中的“第 N 轮迭代结束后，所有人对齐再进入下一轮”。
 
 ### 4.4 时间处理`std::chrono`全景图
 
@@ -160,7 +160,7 @@ C++11引入`<chrono>`头文件，提供类型安全的**时间处理机制**，�
 
 **⚠ 注意**：
 1. `wait_for`默认使用稳定时钟，但容易**假唤醒**无限等待，相当于`wait_until(now() + dur)`，`wait_until`更可靠。
-2. 时间段支持隐式转换（大单位向小单位），但浮点数字面量可能导致精度损失，建议使用显式转换`std::chrono::duration_cast`。
+2. 时间段支持隐式转换（大向小单位），但可能导致精度损失（浮点数字面量），建议显式转换`std::chrono::duration_cast`。
 
 ### 4.5 函数化链式范式 (未来趋势)
 
@@ -182,9 +182,9 @@ C++11引入`<chrono>`头文件，提供类型安全的**时间处理机制**，�
 
 ### 5.2 内存模型与内存序原理
 
-**原子操作**是不可分割的内存访问，对于每一个**原子变量**，C++内存模型都定义了一个**修改顺序**（所有线程对其修改顺序全局一致）。
+**原子操作**是不可分割的内存访问，对于每一个**原子变量**，所有线程对其修改顺序全局一致（由内存模型保证）。
 
-> **✎ 备注**：**修改顺序**强调对某个变量修改的观察顺序**全局一致**，而**内存序**强调**跨变量**，限制周围的指令重排，约束数据可见性。同步概念里的 happens-before 是一种跨变量的偏序（partial order），由原子操作和内存序共同保证。
+> **✎ 备注**：**修改顺序**强调对某个变量修改的观察顺序**全局一致**，而**内存序**强调**跨变量**，限制指令重排，约束数据**可见性**。同步概念里的happens-before是一种跨变量的偏序(partial order)，由原子操作和内存序共同保证。
 
 ![内存序全景图](images/memory_order_arch/memory_order_arch.png)
 
@@ -211,14 +211,28 @@ C++11引入`<chrono>`头文件，提供类型安全的**时间处理机制**，�
 
 ### 6.1 Show Me Your Code.
 
+![线程安全栈（接口安全）](cpp-concurrency-practice/06_lock_based_concurrent_data_structures/01_thread_safe_stack.cpp)
 
+![线程安全队列（生产-消费）](cpp-concurrency-practice/06_lock_based_concurrent_data_structures/02_thread_safe_queue.cpp)
+
+![细粒度锁链表（步进式加锁）](cpp-concurrency-practice/06_lock_based_concurrent_data_structures/03_fine_grained_queue.cpp)
+
+![分段速写锁哈希表](cpp-concurrency-practice/06_lock_based_concurrent_data_structures/04_lookup_table.cpp)
 
 ### 6.2 设计原则与避坑指南
 
 **⚠ 注意**：
-1. **异常安全**：锁的获取与释放应通过 RAII 机制，确保在**异常控制流**下不会锁泄漏、资源泄漏或数据结构不变式被破坏。
+1. **异常安全**：锁的获取与释放应通过 RAII 机制，确保在**异常控制流**不会锁 / 资源泄漏或数据结构不变式被破坏。
 2. **接口安全**：避免因接口定义导致的**固有竞态条件**（Inherent Race Condition）。
 3. **最大化并发**：**避免全局串行化**，从“一把大锁”进化为**细粒度锁**或**分段锁**。
+
+**接口安全经典反例**：
+```cpp
+if (!stack.empty()) { // 检查栈是否为空
+    int value = stack.top(); // 读取栈顶元素
+    stack.pop(); // 弹出栈顶元素
+}
+```
 
 ---
 
