@@ -1,0 +1,29 @@
+name: Build C++ Concurrency Examples
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake g++
+
+      - name: Build all modules
+        run: |
+          set -e
+          for dir in cpp-concurrency-practice/*/; do
+            if [ -f "$dir/CMakeLists.txt" ]; then
+              echo "==> Building $dir"
+              cmake -S "$dir" -B "$dir/build"
+              cmake --build "$dir/build"
+            fi
+          done

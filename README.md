@@ -1,3 +1,12 @@
+![Build](https://github.com/Luoseyznl/cpp-concurrency-repo/actions/workflows/build.yml/badge.svg) 
+![License](https://img.shields.io/badge/License-MIT-blue.svg)
+
+# C++ Concurrency in Action
+
+本仓库是对 *Anthony Williams《C++ Concurrency in Action（第 2 版）》* 的**学习笔记**。
+
+---
+
 ## 1. C++多线程历史
 
 在 C++11 之前，C++ 只是一个“单线程语言”。要实现多线程，必须针对不同操作系统调用底层 API（如 Linux 的 `pthread` 或 Windows 的 `WinAPI`）。C++11 引入了**原生多线程支持**，并在后续标准中不断完善，形成了一套跨平台、类型安全且高效的并发编程模型。

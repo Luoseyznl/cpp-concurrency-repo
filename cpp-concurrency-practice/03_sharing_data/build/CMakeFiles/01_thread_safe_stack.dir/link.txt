@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/01_thread_safe_stack.dir/01_thread_safe_stack.cpp.o -o 01_thread_safe_stack 

@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/04_call_once_singleton.dir/04_call_once_singleton.cpp.o -o 04_call_once_singleton 
