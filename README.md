@@ -56,15 +56,15 @@
 
 ### 3.1 Show Me Your Codes.
 
-![线程安全栈 (thread_safe_stack)](cpp-concurrency-practice/03_sharing_data/01_thread_safe_stack.cpp)
+![线程安全栈 (thread_safe_stack)](cpp-concurrency-practice/03_sharing_data/01_thread_safe_stack.cpp)：重点关注接口安全（Interface Safety）设计。
 
-![交叉转账（死锁防御案例）](cpp-concurrency-practice/03_sharing_data/02_deadlock_avoidance.cpp)
+![交叉转账（死锁防御案例）](cpp-concurrency-practice/03_sharing_data/02_deadlock_avoidance.cpp)：重点关注死锁防御体系设计。
 
-![灵活用锁（unique_lock）](cpp-concurrency-practice/03_sharing_data/03_lock_flexibility.cpp)
+![灵活用锁（unique_lock）](cpp-concurrency-practice/03_sharing_data/03_lock_flexibility.cpp)：展示`std::unique_lock`的灵活用法：延迟加锁、提前解锁、可转移所有权。
 
-![单例模式（call_once）](cpp-concurrency-practice/03_sharing_data/04_call_once_singleton.cpp)
+![单例模式（call_once）](cpp-concurrency-practice/03_sharing_data/04_call_once_singleton.cpp)：线程安全的单例模式实现（局部 `static` 实例对象 / `std::call_once`）。
 
-![读写分离锁（shared_mutex）](cpp-concurrency-practice/03_sharing_data/05_shared_mutex_dns.cpp)
+![读写分离锁（shared_mutex）](cpp-concurrency-practice/03_sharing_data/05_shared_mutex_dns.cpp)： 读多写少场景下的共享数据保护。
 
 ### 3.2 互斥锁原理与避坑指南
 
@@ -101,30 +101,30 @@
 
 ### 4.1 Show Me Your Codes.
 
-![条件变量 (condition_variable)](cpp-concurrency-practice/04_synchronization/01_condition_variable.cpp)
+![条件变量 (condition_variable)](cpp-concurrency-practice/04_synchronization/01_condition_variable.cpp)： 使用条件变量实现生产者-消费者模型，重点关注**虚假唤醒**与**唤醒丢失**。
 
-![异步任务 (async & future)](cpp-concurrency-practice/04_synchronization/02_async_deferred.cpp)
+![异步任务 (async & future)](cpp-concurrency-practice/04_synchronization/02_async_deferred.cpp)：**异步执行**与**延迟执行**两种模式。
 
-![打包任务 (packaged_task)](cpp-concurrency-practice/04_synchronization/03_packaged_task.cpp)
+![打包任务 (packaged_task)](cpp-concurrency-practice/04_synchronization/03_packaged_task.cpp)：将可调用对象包装为异步任务，与`std::future`关联。
 
-![异步任务结果通道 (future & promise)](cpp-concurrency-practice/04_synchronization/04_promise_future.cpp)
+![异步任务结果通道 (future & promise)](cpp-concurrency-practice/04_synchronization/04_promise_future.cpp)：使用`std::promise`-`std::future`建立线程间结果通道。
 
-![多线程获取结果 (shared_future)](cpp-concurrency-practice/04_synchronization/05_shared_future.cpp)
+![多线程获取结果 (shared_future)](cpp-concurrency-practice/04_synchronization/05_shared_future.cpp)：使用`std::shared_future`实现多线程共享异步结果。
 
-![时间处理 (chrono)](cpp-concurrency-practice/04_synchronization/06_chrono_utils.cpp)
+![时间处理 (chrono)](cpp-concurrency-practice/04_synchronization/06_chrono_utils.cpp)：使用`std::chrono`实现类型安全的时间处理与等待。
 
-![C++20 链式异步任务 (then & when_all)](cpp-concurrency-practice/04_synchronization/07_boost_chaining.cpp)
+![C++20 链式异步任务 (then & when_all)](cpp-concurrency-practice/04_synchronization/07_boost_chaining.cpp)：使用`Boost.Future`实现函数化链式异步任务。
 
 ### 4.2 操作系统调度原理
 
-**线程控制块(TCB)**：Thread ID、CPU 上下文（PC指针, SP指针, 通用/浮点/SIMD 寄存器）、线程状态、调度优先级、信号掩码等。
+**线程控制块(TCB)**：ID、CPU 上下文（PC/SP指针, 通用/浮点/SIMD 寄存器）、线程状态、调度优先级、信号掩码等。
 
-**调度器对TCB的管理**：TCB 在 CPU 核心、**就绪队列 Ready Queue** 与 **等待队列 Wait Queue**之间流转。对应线程状态：
+**调度器对TCB的管理**：TCB 在 CPU 核心、**就绪队列 Ready Queue** 与 **等待队列 Wait Queue**之间流转。
 - 运行（Running）：TCB 上下文加载到寄存器中，CPU硬件核心执行线程指令。
 - 就绪（Ready）：TCB 存于就绪队列中，等待调度器分配 CPU 时间片。
 - 阻塞（Blocked）：TCB 移出就绪队列，挂入对应的等待队列中，等待外部事件（锁、I/O、信号）。
 - 挂起（Suspended）：TCB 仍然在内存中，但进程的虚拟内存被换出到磁盘，等待恢复。
-- 终止（Terminated）：资源（栈、寄存器）立即释放，仅留 TCB 等待父进程/主线程（Zombie/Terminate）回收。
+- 终止（Terminated）：资源（栈、寄存器）立即释放，仅留 TCB 等待父/主线程（Zombie/Terminate）回收。
 
 ### 4.3 同步操作原理与避坑指南
 
@@ -160,7 +160,7 @@ C++11引入`<chrono>`头文件，提供类型安全的**时间处理机制**，�
 
 **⚠ 注意**：
 1. `wait_for`默认使用稳定时钟，但容易**假唤醒**无限等待，相当于`wait_until(now() + dur)`，`wait_until`更可靠。
-2. 时间段支持隐式转换（大向小单位），但可能导致精度损失（浮点数字面量），建议显式转换`std::chrono::duration_cast`。
+2. 时间段支持隐式转换（大向小单位），但可能损失精度（比如浮点数），建议显式转换`std::chrono::duration_cast`。
 
 ### 4.5 函数化链式范式 (未来趋势)
 
@@ -172,13 +172,13 @@ C++11引入`<chrono>`头文件，提供类型安全的**时间处理机制**，�
 
 ### 5.1 Show Me Your Codes.
 
-![无锁栈 (lock_free_stack)](cpp-concurrency-practice/05_memory_model_and_atomics/01_lock_free_stack.cpp)
+![无锁栈 (lock_free_stack)](cpp-concurrency-practice/05_memory_model_and_atomics/01_lock_free_stack.cpp)：使用`std::atomic`+CAS实现的无锁栈(lock-free stack)。
 
-![内存序 (memory_order)](cpp-concurrency-practice/05_memory_model_and_atomics/02_release_acquire.cpp)
+![内存序 (memory_order)](cpp-concurrency-practice/05_memory_model_and_atomics/02_release_acquire.cpp)：展示不同内存序对多线程可见性的影响。
 
-![原子标志位自旋锁 (atomic_flag_spinlock)](cpp-concurrency-practice/05_memory_model_and_atomics/03_atomic_flag_spinlock.cpp)
+![原子标志位自旋锁 (atomic_flag_spinlock)](cpp-concurrency-practice/05_memory_model_and_atomics/03_atomic_flag_spinlock.cpp)：使用`std::atomic_flag`实现的简单自旋锁。
 
-![原子指针指针更新 (atomic<shared_ptr>)](cpp-concurrency-practice/05_memory_model_and_atomics/04_atomic_smart_ptr.cpp)
+![原子指针指针更新 (atomic<shared_ptr>)](cpp-concurrency-practice/05_memory_model_and_atomics/04_atomic_smart_ptr.cpp)：使用`std::atomic<std::shared_ptr<T>>`实现的线程安全智能指针更新。
 
 ### 5.2 内存模型与内存序原理
 
@@ -211,13 +211,13 @@ C++11引入`<chrono>`头文件，提供类型安全的**时间处理机制**，�
 
 ### 6.1 Show Me Your Codes.
 
-![线程安全栈（接口安全）](cpp-concurrency-practice/06_lock_based_concurrent_data_structures/01_thread_safe_stack.cpp)
+![线程安全栈（接口安全）](cpp-concurrency-practice/06_lock_based_concurrent_data_structures/01_thread_safe_stack.cpp)：重点关注接口安全（Interface Safety）设计。
 
-![线程安全队列（生产-消费）](cpp-concurrency-practice/06_lock_based_concurrent_data_structures/02_thread_safe_queue.cpp)
+![线程安全队列（生产-消费）](cpp-concurrency-practice/06_lock_based_concurrent_data_structures/02_thread_safe_queue.cpp)：使用条件变量实现的线程安全队列，支持多生产者-多消费者模型。
 
-![细粒度锁链表（步进式加锁）](cpp-concurrency-practice/06_lock_based_concurrent_data_structures/03_fine_grained_queue.cpp)
+![细粒度锁链表（步进式加锁）](cpp-concurrency-practice/06_lock_based_concurrent_data_structures/03_fine_grained_queue.cpp)：使用细粒度锁和步进式加锁实现的线程安全链表。
 
-![分段速写锁哈希表](cpp-concurrency-practice/06_lock_based_concurrent_data_structures/04_lookup_table.cpp)
+![分段速写锁哈希表](cpp-concurrency-practice/06_lock_based_concurrent_data_structures/04_lookup_table.cpp)：使用分段读写锁实现的线程安全哈希表。
 
 ### 6.2 设计原则与避坑指南
 
@@ -240,20 +240,30 @@ if (!stack.empty()) { // 检查栈是否为空
 
 ### 7.1 Show Me Your Codes.
 
+![无锁栈 (lock_free_stack)](cpp-concurrency-practice/07_lock_free_concurrent_data_structures/01_lock_free_stack.cpp)：使用`std::atomic`+CAS实现的无锁栈(lock-free stack)。
+
+![无锁队列 (lock_free_queue)](cpp-concurrency-practice/07_lock_free_concurrent_data_structures/02_lock_free_queue.cpp)：使用`std::atomic`+CAS实现的无锁队列(lock-free queue)。
+
+![SPSC环形缓冲区 (spsc_ring_buffer)](cpp-concurrency-practice/07_lock_free_concurrent_data_structures/03_spsc_ring_buffer.cpp)：单生产者-单消费者无锁环形缓冲区。
+
+![风险指针内存回收 (hazard_pointer)](cpp-concurrency-practice/07_lock_free_concurrent_data_structures/04_hazard_pointer.cpp)：使用风险指针实现的安全内存回收机制。
+
+![延迟回收内存管理 (epoch_based_reclamation)](cpp-concurrency-practice/07_lock_free_concurrent_data_structures/05_epoch_based_reclamation.cpp)：使用延迟回收实现的安全内存回收机制。
+
 
 ### 7.2 设计原则与避坑指南
 
 ![核心定义](images/concurrency_program_arch/concurrency_program_arch.png)
 
 **⚠ 注意**：
-1. **无锁不等于高性能**：无锁结构通常伴随更高的复杂度和开销，，仅在锁竞争成为瓶颈的高并发场景下才具备性能优势。
+1. **无锁 ≠ 高性能**：无锁结构通常伴随更高的复杂度和开销，，仅在锁竞争成为瓶颈的高并发场景下才具备优势。
 2. **正确性优先于性能**：无锁设计必须首先确保**线程安全性**和**系统前进性**，再考虑内存序等性能优化。
 3. **ABA问题防范**：何基于 CAS 的算法都必须显式解决 ABA 问题（值变回原样但状态已变）。
    1. 使用**标记位**或**版本号**：将指针与版本号打包在一起，CAS 时同时比较指针和版本号。
    2. 使用**双倍宽度 CAS**：利用 CPU 支持的双倍宽度原子操作，同时更新指针和版本号。
 4. **内存回收策略**：无锁环境缺乏自动 GC，必须显式设计**安全内存回收（SMR）**策略。
-   1. 延迟回收（Epoch-Based）：维护一个**待删除节点链表**，只有当活跃线程都离开 epoch 后，全局计数器为零时才回收。
-   2. 风险指针：读线程对目标节点“举手示意”（**全局可见指针**），写线程在删除前扫描，“无人举手”才可回收节点。
+   1. 延迟回收：维护一个**待删除节点链表**，当活跃线程都离开 Epoch 后（全局计数器为零）回收。
+   2. 风险指针：读线程对目标节点“举手示意”（**全局可见指针**），写线程在删除前扫描，“无人举手”才可回收。
    3. 分离引用计数：将普通计数分离为 **外部链接数** 和 **内部引用数** ，二者皆零时方可释放。
 5. **优先复用成熟无锁库**：`Intel TBB`、`Facebook Folly`、`Concurrency Kit`等。
 6. **内存序默认最强**：`std::memory_order_seq_cst`，仅在确认是性能热点且逻辑无误后再针对性放宽。

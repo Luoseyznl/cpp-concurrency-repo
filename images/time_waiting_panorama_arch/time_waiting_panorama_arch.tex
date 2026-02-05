@@ -4,9 +4,6 @@
 \usepackage{amsmath, amssymb}
 \usepackage{newtxtext,newtxmath} 
 
-% ==========================================
-%  1. 配色定义
-% ==========================================
 \definecolor{cThreadFill}{RGB}{225, 245, 254}
 \definecolor{cThreadDraw}{RGB}{2, 119, 189}
 \definecolor{cSyncFill}{RGB}{224, 242, 241}
@@ -16,9 +13,6 @@
 \definecolor{bgLayerScope}{RGB}{240, 244, 248} 
 \definecolor{lineColor}{RGB}{60, 60, 60}       
 
-% ==========================================
-%  2. 样式设置 (严格无空行版)
-% ==========================================
 \tikzset{
     node distance=0.8cm and 0.8cm,
     font=\footnotesize\sffamily,
@@ -59,16 +53,9 @@
 \begin{document}
 \begin{tikzpicture}
 
-	% =========================================================
-	% 3. 表头 (Headers)
-	% =========================================================
 	\node[font=\bfseries\small, text=black!70] (h1) at (0,0) {Namespace / Class};
 	\node[font=\bfseries\small, text=black!70, right=4.5cm of h1.west] (h2) {API (for / until)};
 	\node[font=\bfseries\small, text=black!70, right=9.0cm of h1.west] (h3) {Return Type};
-
-	% =========================================================
-	% 4. 内容行 (Rows)
-	% =========================================================
 
 	% --- Row 1: this_thread ---
 	\node [styleColCtx, below=0.5cm of h1] (r1_c) {std::this\_thread};
@@ -100,17 +87,11 @@
 	\node [styleColFunc, right=0.3cm of r6_c] (r6_f) {wait\_for(dur)\\wait\_until(tp)};
 	\node [styleColRet, right=0.3cm of r6_f] (r6_r) {std::future\_status::\\ready / timeout / deferred};
 
-	% =========================================================
-	% 5. 装饰与连线
-	% =========================================================
 	\foreach \i in {1,...,6} {
 			\draw [conn] (r\i_c) -- (r\i_f);
 			\draw [conn] (r\i_f) -- (r\i_r);
 		}
 
-	% =========================================================
-	% 6. 背景层
-	% =========================================================
 	\begin{scope}[on background layer]
 		\node [styleScope, fit=(h1) (r6_r),
 			label={[anchor=north east, text=black!30, font=\bfseries]north east:C++ Chrono Timeout API Map}] {};

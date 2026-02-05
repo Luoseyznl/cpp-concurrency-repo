@@ -15,6 +15,15 @@
 ########################
 
 //Value Computed by CMake
+06LockBasedConcurrentDataStructures_BINARY_DIR:STATIC=/home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/06_lock_based_concurrent_data_structures/build
+
+//Value Computed by CMake
+06LockBasedConcurrentDataStructures_IS_TOP_LEVEL:STATIC=ON
+
+//Value Computed by CMake
+06LockBasedConcurrentDataStructures_SOURCE_DIR:STATIC=/home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/06_lock_based_concurrent_data_structures
+
+//Value Computed by CMake
 06_concurrent_data_structures_BINARY_DIR:STATIC=/home/gew/Zotero/storage/L49KAJAU/cpp-concurrency-practice/06_lock_based_concurrent_data_structures/build
 
 //Value Computed by CMake
@@ -157,7 +166,7 @@ CMAKE_PROJECT_DESCRIPTION:STATIC=
 CMAKE_PROJECT_HOMEPAGE_URL:STATIC=
 
 //Value Computed by CMake
-CMAKE_PROJECT_NAME:STATIC=06_concurrent_data_structures
+CMAKE_PROJECT_NAME:STATIC=06LockBasedConcurrentDataStructures
 
 //Path to a program.
 CMAKE_RANLIB:FILEPATH=/usr/bin/ranlib

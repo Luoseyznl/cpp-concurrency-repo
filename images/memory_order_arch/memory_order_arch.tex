@@ -60,14 +60,14 @@
 		$\bullet$ \textbf{Mode}: Strict Global Ordering (Default).\\
 		$\bullet$ \textbf{Guarantee}: "God's Eye View". \\
 		\quad All threads observe the \textit{exact same} order of operations.\\
-		$\bullet$ \textbf{Cost}: Highest. Flushes CPU buffers completely.
+		$\bullet$ \textbf{Cost}: Highest. Flush CPU buffers completely.
 	};
 
 	% =========================================================
 	% 2. 获取/发布 (Acquire / Release) - 紧凑分栏
 	% =========================================================
 	\node[card, draw=cAcqDraw, fill=cAcqFill, text=cAcqText, below=of seq] (acq) {
-		\texttt{\textbf{\large std::memory\_order::acq\_rel}} \textit{(Sync Pair)}
+		\texttt{\textbf{\large std::memory\_order::acq\_rel}}
 
 		\tikz \draw[divLine] (0,0) -- (9.0,0);
 
@@ -75,18 +75,18 @@
 		% 定义列格式：左对齐，去除额外间距，中间插入淡灰色竖线
 		\begin{tabular}{@{} >{\raggedright\arraybackslash}p{4.3cm} !{\color{black!20}\vrule width 1pt} >{\raggedright\arraybackslash}p{4.3cm} @{}}
 			% --- Header ---
-			\textbf{\texttt{::release} (Producer)}              & \textbf{\texttt{::acquire} (Consumer)}            \\
+			\textbf{\texttt{::release}} (Producer)              & \textbf{\texttt{::acquire}} (Consumer)            \\
 
 			% --- Body ---
 			\quad \color{black!60}Barrier: $\downarrow$ Blocked & \quad \color{black!60}Barrier: $\uparrow$ Blocked \\
 
 			% --- Key Concept (Be Seen / Be Ready) ---
-			\textbf{[ Ensures Data is READY ]}                  & \textbf{[ Ensures Data is SEEN ]}
+			\textbf{Ensure Data is READY.}                  & \textbf{Ensure Data is SEEN.}
 		\end{tabular}
 
 		\tikz \draw[divLine] (0,0) -- (9.0,0);
 
-		$\bullet$ \textbf{Cost}: Moderate. Enforces local "Happens-Before".
+		$\bullet$ \textbf{Cost}: Moderate. Enforce local "Happens-Before".
 	};
 
 	% =========================================================

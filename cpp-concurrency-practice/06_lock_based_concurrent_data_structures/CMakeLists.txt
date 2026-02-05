@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(06_concurrent_data_structures)
+project(06LockBasedConcurrentDataStructures)
 
 set(CMAKE_CXX_STANDARD 17) # 需要 C++17 支持 std::shared_mutex
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
