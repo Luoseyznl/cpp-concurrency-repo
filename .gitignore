@@ -7,7 +7,6 @@
 *.synctex.gz
 *.fls
 *.fdb_latexmk
-*.pdf
 
 images/**
 !images/**/*.png
