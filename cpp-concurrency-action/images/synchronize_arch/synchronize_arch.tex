@@ -1,0 +1,118 @@
+\documentclass[tikz,border=10pt]{standalone}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, calc, shadows.blur, backgrounds}
+
+\definecolor{cBlue}{RGB}{21, 101, 192}
+\definecolor{cGreen}{RGB}{46, 125, 50}
+\definecolor{cRed}{RGB}{183, 28, 28}
+\definecolor{cPurple}{RGB}{106, 27, 154}   
+
+\colorlet{cStep1}{cBlue}
+\colorlet{cStep2}{cGreen}
+\colorlet{cStep3}{cRed}
+\colorlet{cStep4}{cPurple}
+
+\definecolor{bgGray}{RGB}{250, 250, 250} 
+
+\tikzset{
+    mainBox/.style={
+        rectangle, rounded corners=4pt,
+        minimum width=5cm, minimum height=1.2cm,
+        align=center, font=\bfseries\sffamily, text=white,
+        blur shadow={shadow blur steps=5, shadow opacity=20}
+    },
+    noteNode/.style={
+        text width=4.5cm, align=left,
+        font=\scriptsize\sffamily, color=gray!85!black
+    },
+    layerLabel/.style={
+        font=\scriptsize\bfseries\sffamily,
+        align=right, color=gray!60
+    },
+    flowArrow/.style={
+        -{Latex[length=3mm, width=2mm]},
+        line width=1.5pt, draw=gray!40
+    }
+}
+
+\begin{document}
+\begin{tikzpicture}[node distance=0.9cm]
+
+	% =========================================================
+	% Core Logical Flow
+	% =========================================================
+
+	\node [mainBox, fill=cStep1] (step1) {
+		Memory Ordering
+	};
+
+	\node [mainBox, fill=cStep2, below=of step1] (step2) {
+		Synchronizes-with
+	};
+
+	\node [mainBox, fill=cStep3, below=of step2] (step3) {
+		Happens-before
+	};
+
+	\node [mainBox, fill=cStep4, below=of step3] (step4) {
+		Visibility and Ordering
+	};
+
+	\draw [flowArrow] (step1) -- (step2);
+	\draw [flowArrow] (step2) -- (step3);
+	\draw [flowArrow] (step3) -- (step4);
+
+	% =========================================================
+	% Explanatory Notes
+	% =========================================================
+
+	\node [noteNode, right=0.6cm of step1] (note1) {
+		\textbf{\textcolor{cStep1}{Semantic Constraints}}\\ % 标题颜色与左侧对应
+		Define permissible compiler and hardware reorderings for atomic operations.\\
+		\textbf{e.g.,} \texttt{memory\_order\_relaxed} $\cdots$
+	};
+
+	\node [noteNode, right=0.6cm of step2] (note2) {
+		\textbf{\textcolor{cStep2}{Inter-thread Relation}}\\
+		Established when a Release operation\\
+		is observed by a corresponding Acquire\\
+		operation on the same atomic object.
+	};
+
+	\node [noteNode, right=0.6cm of step3] (note3) {
+		\textbf{\textcolor{cStep3}{Partial Order Constraint}}\\
+		If operation A \textbf{happens-before} B, all\\
+		side effects of A must be visible to B.
+	};
+
+	\node [noteNode, right=0.6cm of step4] (note4) {
+		\textbf{\textcolor{cStep4}{Derived Guarantees}}\\
+		Prevents causality-violating reordering\\
+		and ensures cross-thread consistency\\
+		of observable memory effects.
+	};
+
+	\foreach \i in {1,2,3,4} {
+			\draw [dotted, thick, gray!40] (step\i.east) -- (note\i.west);
+		}
+
+	% =========================================================
+	% Abstraction Layers
+	% =========================================================
+
+	\node [layerLabel, left=0.5cm of step1] {Compiler and Hardware Level};
+	\node [layerLabel, left=0.5cm of step2] {Inter-thread Synchronization};
+	\node [layerLabel, left=0.5cm of step3] {Memory Model Semantics};
+	\node [layerLabel, left=0.5cm of step4] {Program-observable Behavior};
+
+	% =========================================================
+	% Background
+	% =========================================================
+
+	\begin{scope}[on background layer]
+		\node [rectangle, fill=bgGray, rounded corners=10pt,
+			fit=(step1)(step4)(note1)(note4), inner sep=15pt] {};
+	\end{scope}
+
+\end{tikzpicture}
+\end{document}

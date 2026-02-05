@@ -1,0 +1,91 @@
+\documentclass[tikz,border=10pt]{standalone}
+\usepackage{tikz}
+\usetikzlibrary{shapes.multipart, shadows, positioning, arrows.meta, calc, backgrounds, decorations.pathreplacing}
+\usepackage{newtxtext,newtxmath}
+
+\definecolor{cFlagDraw}{RGB}{97, 97, 97}
+\definecolor{cFlagFill}{RGB}{245, 245, 245}
+\definecolor{cFlagText}{RGB}{66, 66, 66}
+
+\definecolor{cGenDraw}{RGB}{21, 101, 192}
+\definecolor{cGenFill}{RGB}{227, 242, 253}
+\definecolor{cGenText}{RGB}{13, 71, 161}
+
+\definecolor{cSpecDraw}{RGB}{46, 125, 50}
+\definecolor{cSpecFill}{RGB}{232, 245, 233}
+\definecolor{cSpecText}{RGB}{27, 94, 32}
+
+\begin{document}
+\begin{tikzpicture}[
+		font=\footnotesize\sffamily,
+		% 定义 UML 类图风格的节点
+		classNode/.style={
+				rectangle split,
+				rectangle split parts=2,
+				draw=#1Draw,
+				fill=#1Fill,
+				thick,
+				rounded corners=3pt,
+				align=left,
+				text width=5.5cm,
+				drop shadow={opacity=0.15, shadow xshift=2pt, shadow yshift=-2pt},
+				rectangle split part fill={#1Fill, white} % 标题有背景，内容白色
+			},
+		% 连线样式
+		arrowConn/.style={
+				draw=black!40,
+				line width=1.5pt,
+				{Latex[width=3mm, length=3mm]}-, % 箭头指向下方，表示"基于"
+			}
+	]
+
+	% --- Top: 数值/指针特化 ---
+	\node[classNode=cSpec] (top) {
+		\textbf{std::atomic$<$Integral / T*$ >$}
+		\nodepart{second}
+		\texttt{+ fetch\_add / fetch\_sub}\\
+		\texttt{+ fetch\_and / \_or / \_xor} (Integral)\\
+		\texttt{+ operator++, --, +=, -=}
+	};
+
+	% --- Middle: 通用类型 ---
+	\node[classNode=cGen, below=0.6cm of top] (mid) {
+		\textbf{std::atomic$<$T / bool$>$}
+		\nodepart{second}
+		\texttt{+ load() / store()}\\
+		\texttt{+ exchange()}\\
+		\texttt{+ compare\_exchange\_weak/strong}\\
+		\texttt{+ wait() / notify\_*} (C++20)
+	};
+
+	% --- Bottom: 标志位 ---
+	\node[classNode=cFlag, below=0.6cm of mid] (bot) {
+		\textbf{std::atomic\_flag}
+		\nodepart{second}
+		\texttt{+ test\_and\_set()}\\
+		\texttt{+ clear()}\\
+		\textit{*唯一的无锁保证 (Lock-free Guarantee)}
+	};
+
+	% 连接线：空心宽箭头，表示"扩展"
+	\draw[arrowConn] (mid.north) -- (top.south);
+	\draw[arrowConn] (bot.north) -- (mid.south);
+
+	% 左侧的大括号
+	\draw[decorate, decoration={brace, amplitude=10pt, raise=5pt}, thick, color=black!60]
+	(bot.south west) -- (top.north west)
+	node [midway, xshift=-3.5em, align=center, rotate=90, font=\bfseries\small, color=black!70]
+	{Capability Hierarchy};
+
+	% 右侧的注解
+	\node[anchor=west, text=cSpecText, font=\scriptsize] at (top.east)
+	{$\leftarrow$ 支持算术运算};
+
+	\node[anchor=west, text=cGenText, font=\scriptsize] at (mid.east)
+	{$\leftarrow$ 支持 CAS 与内存序};
+
+	\node[anchor=west, text=cFlagText, font=\scriptsize] at (bot.east)
+	{$\leftarrow$ 纯硬件指令封装};
+
+\end{tikzpicture}
+\end{document}

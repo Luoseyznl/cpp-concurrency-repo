@@ -1,14 +1,17 @@
 **/build/
 
+.vscode/
+
 *.aux
 *.log
 *.synctex.gz
 *.fls
 *.fdb_latexmk
+*.pdf
 
-images/*
-!images/*/
+images/**
 !images/**/*.png
 !images/**/*.tex
+!images/**/*.pdf
 
 .zotero*

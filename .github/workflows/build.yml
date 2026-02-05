@@ -1,4 +1,4 @@
-name: Build C++ Concurrency Examples
+name: Build Practice Codes
 
 on:
   push:
@@ -9,21 +9,34 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. 拉取代码
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2. 安装基础 C++ 构建工具
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y cmake g++
 
-      - name: Build all modules
+      # 3. 自动发现并构建“包含 CMakeLists.txt 的子目录”
+      #    - 仅当某个子目录是一个独立 CMake 工程时才构建
+      - name: Build all detected CMake modules
         run: |
           set -e
-          for dir in cpp-concurrency-practice/*/; do
+
+          echo "Scanning repository for CMake projects..."
+
+          found=0
+          for dir in */; do
             if [ -f "$dir/CMakeLists.txt" ]; then
+              found=1
               echo "==> Building $dir"
               cmake -S "$dir" -B "$dir/build"
               cmake --build "$dir/build"
             fi
           done
+
+          if [ "$found" -eq 0 ]; then
+            echo "No CMake projects found. Skipping build step."
+          fi
