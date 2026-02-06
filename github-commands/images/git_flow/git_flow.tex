@@ -44,7 +44,6 @@
         -{Latex[length=2mm, width=1.2mm]},
         font=\scriptsize\sffamily
     },
-    % 虚线样式 (用于 Restore/Reset)
     connDashed/.style={
         conn, dashed, draw=gray!80
     },
@@ -52,126 +51,111 @@
         midway, fill=white, text=lineColor, 
         inner sep=1.5pt, rounded corners=2pt,
         align=center, font=\scriptsize\ttfamily,
-        opacity=0.95, text opacity=1
+        opacity=0.8, text opacity=1
     }
 }
 
 \begin{document}
 \begin{tikzpicture}[node distance=1.2cm and 2.5cm]
 
-    % =========================================
-    % 1. 区域定义
-    % =========================================
+	% =========================================
+	% 1. 区域定义
+	% =========================================
 
-    % Workspace
-    \node [styleWork] (work) {
-        \textbf{Workspace}
-    };
-    \node [statusLabel] at (work.south) {[Modified / Untracked]};
+	% Workspace
+	\node [styleWork] (work) {
+		\textbf{Workspace}
+	};
+	\node [statusLabel] at (work.south) {[Modified / Untracked]};
 
-    % Staging
-    \node [styleStage, right=of work] (stage) {
-        \textbf{Staging Area}
-    };
-    \node [statusLabel] at (stage.south) {[Staged / Uncommitted]};
+	% Staging
+	\node [styleStage, right=of work] (stage) {
+		\textbf{Staging Area}
+	};
+	\node [statusLabel] at (stage.south) {[Staged / Uncommitted]};
 
-    % Local Repo
-    \node [styleLocal, right=of stage] (local) {
-        \textbf{Local Repo}\\
-        \vspace{1.0cm} % Space for stack
-    };
+	% Local Repo
+	\node [styleLocal, right=of stage] (local) {
+		\textbf{Local Repo}\\
+		\vspace{1.0cm}
+	};
 
-    % Remote Repo
-    \node [styleRemote, above=2.2cm of stage, xshift=1.8cm, minimum width=4.0cm, minimum height=2.8cm] (remote) {
-        \textbf{Remote: origin} \\
-        \vspace{1.2cm} % Space for tree
-    };
+	% Remote Repo
+	\node [styleRemote, above=2.2cm of stage, xshift=1.8cm, minimum width=4.0cm, minimum height=2.8cm] (remote) {
+		\textbf{Remote: origin} \\
+		\vspace{0.6cm}
+	};
 
-    % =========================================
-    % 2. 内部结构可视化
-    % =========================================
+	% =========================================
+	% 2. 内部结构可视化
+	% =========================================
 
-    % --- Local Commit Stack ---
-    \node[card, fill=gray!10, text=gray!40] at ($(local.south) + (0, 0.6)$) (c2) {\tiny HEAD\textasciitilde 2};
-    \node[card, fill=gray!5, text=gray!60] at ($(c2.north) + (0, 0.1)$) (c1) {\tiny HEAD\textasciitilde 1};
-    \node[card, draw=cLocalDraw, thick] at ($(c1.north) + (0, 0.15)$) (c0) {\scriptsize \textbf{HEAD}};
+	% --- Local Commit Stack ---
+	\node[card, fill=gray!10, text=gray!40] at ($(local.south) + (0, 0.6)$) (c2) {\tiny HEAD\textasciitilde 2};
 
-    % --- Remote Branch Tree ---
-    \begin{scope}[shift={($(remote.west) + (0.4, -0.55)$)}]
-        % 主干
-        \draw[cRemoteDraw, thick] (0,0) -- (2.2,0) node[right, font=\tiny\ttfamily] {origin/main};
-        % 分支 feat
-        \draw[cRemoteDraw, thick] (0.8,0) -- (0.8,0.4) -- (1.5,0.4) node[right, font=\tiny\ttfamily] {origin/feat};
-        % 节点
-        \fill[cRemoteDraw] (0,0) circle(2pt);
-        \fill[cRemoteDraw] (0.8,0) circle(2pt);
-        \fill[cRemoteDraw] (1.5,0) circle(2pt);
-        \fill[cRemoteDraw] (1.5,0.4) circle(2pt);
-    \end{scope}
+	\node[card, fill=gray!5, text=gray!60] at ($(c2.north) + (0, 0.1)$) (c1) {\tiny HEAD\textasciicircum};
 
-    % =========================================
-    % 3. 核心连线 (Forward: Solid)
-    % =========================================
+	% HEAD
+	\node[card, draw=cLocalDraw, thick] at ($(c1.north) + (0, 0.15)$) (c0) {\scriptsize \textbf{HEAD}};
 
-    % [Add]: Work -> Stage
-    \draw [conn] (work.15) to[out=10, in=170]
-        node[cmdLabel, above=1pt] {git add}
-        (stage.165);
+	% --- Remote Branch Tree ---
+	\begin{scope}[shift={($(remote.west) + (0.4, -0.55)$)}]
+		\draw[cRemoteDraw, thick] (0,0) -- (2.2,0) node[right, font=\tiny\ttfamily] {origin/main};
+		\draw[cRemoteDraw, thick] (0.8,0) -- (0.8,0.4) -- (1.5,0.4) node[right, font=\tiny\ttfamily] {origin/feat};
+		\fill[cRemoteDraw] (0,0) circle(2pt);
+		\fill[cRemoteDraw] (0.8,0) circle(2pt);
+		\fill[cRemoteDraw] (1.5,0) circle(2pt);
+		\fill[cRemoteDraw] (1.5,0.4) circle(2pt);
+	\end{scope}
 
-    % [Commit]: Stage -> Local
-    \draw [conn] (stage.east) to[out=0, in=180]
-        node[cmdLabel, fill=white] {git commit}
-        (c0.west);
+	% =========================================
+	% 3. 核心连线
+	% =========================================
 
-    % [Push]: Local -> Remote
-    \draw [conn] (local.north) to[out=90, in=340]
-        node[cmdLabel, pos=0.5] {git push}
-        (remote.340);
+	% [Add]
+	\draw [conn] (work.15) to[out=10, in=170] node[cmdLabel, above=1pt] {git add} (stage.165);
 
-    % =========================================
-    % 4. 撤销/回退连线 (Backward: Dashed)
-    % =========================================
+	% [Commit]
+	\draw [conn] (stage.east) to[out=0, in=180] node[cmdLabel, fill=white, opacity=0.8] {git commit} (c0.west);
 
-    % [Restore Work]: Work -> Stage (Dashed)
-    \draw [connDashed, red!60!black] (work.345) to[out=350, in=190]
-        node[cmdLabel, below=1pt] {git restore}
-        (stage.195);
+	% [Push]
+	\draw [conn, thick, color=cRemoteDraw] (local.north) to[out=90, in=340] node[cmdLabel, pos=0.5] {git push} (remote.340);
 
-    % [Restore Staged]: Stage -> Local (Dashed)
-    \draw [connDashed] (stage.330) to[out=330, in=180]
-        node[cmdLabel, fill=none, below=6pt, xshift=5pt, align=left] {
-            git restore -{}-staged
-        }
-        (c1.west);
+	% =========================================
+	% 4. 撤销/回退连线
+	% =========================================
 
-    % [Reset Soft]: Local Self Loop
-    \path (local.south east) edge [connDashed, loop right, min distance=1cm]
-        node [right, font=\scriptsize\ttfamily, color=black!70, align=left] {
-            git reset -{}-soft\\
-            \itshape (HEAD only)
-        } (local.east);
+	% [Restore Work]
+	\draw [connDashed, red!60!black] (work.345) to[out=350, in=190] node[cmdLabel, below=1pt] {git restore} (stage.195);
 
-    % [Reset Hard]: Work -> Local (DANGER)
-    \draw [connDashed, red!60!black] (work.270) to[out=270, in=270, looseness=0.5]
-        node[cmdLabel, below=1pt, text=red!60!black] {git reset -{}-hard}
-        (local.250);
+	% [Restore Staged]
+	\draw [connDashed] (stage.330) to[out=330, in=180] node[cmdLabel, fill=white, opacity=0.8, below=6pt, xshift=-2pt, align=left] {git restore -{}-staged} (c1.west);
 
-    % =========================================
-    % 5. 远程连线
-    % =========================================
+	% [Reset Soft]: Local Internal Jump (HEAD -> HEAD~2)
+	\draw [connDashed, cLocalDraw] (c0.east) to[out=0, in=0, looseness=1.8]
+	node [right, pos=0.5, font=\tiny\ttfamily, color=black!70, align=left, xshift=1pt] {
+	git reset -{}-soft\\
+	\itshape (HEAD only)
+	} (c2.east);
 
-    % [Pull]: Remote -> Work
-    \draw [conn, thick, color=cRemoteDraw] (remote.180) to[out=180, in=90]
-        node[cmdLabel, pos=0.5] {
-            git pull \itshape (fetch + merge) \\
-            git pull --rebase
-        }
-        (work.north);
+	% [Reset Hard]: Work -> Local
+	\draw [connDashed, red!60!black] (work.270) to[out=270, in=270, looseness=0.5]
+	node[cmdLabel, below=1pt, text=red!60!black] {git reset -{}-hard}
+	(local.250);
 
-    % [Fetch]: Remote -> Local
-    \draw [conn] (remote.240) to[out=270, in=120]
-        node[cmdLabel, pos=0.6, fill=white] {git fetch}
-        (local.120);
+	% =========================================
+	% 5. 远程连线
+	% =========================================
+
+	% [Pull]
+	\draw [conn, thick, color=cRemoteDraw] (remote.180) to[out=180, in=90]
+	node[cmdLabel, pos=0.5] {
+		git pull \itshape (fetch + merge) \\
+		git pull --rebase
+	} (work.north);
+
+	% [Fetch]
+	\draw [conn, thick, color=cRemoteDraw] (remote.240) to[out=270, in=120] node[cmdLabel, pos=0.6, fill=white] {git fetch} (local.120);
 
 \end{tikzpicture}
 \end{document}
